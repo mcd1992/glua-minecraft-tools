@@ -17,7 +17,7 @@ export interface IManifest {
 		[modID: string]: {
 			filename: string;
 			url: string;
-			hash: string;
+			sha1hash: string;
 		};
 	};
 };
@@ -50,7 +50,7 @@ async function main(argc: number, argv: string[])
 	{
 		manifest = JSON.parse(fs.readFileSync(`${targetDirName}/manifest.json`).toString());
 	}
-	
+
 	const concurrency = new ConcurrentManager(5);
 
 	let i = 0;
@@ -93,11 +93,11 @@ async function main(argc: number, argv: string[])
 					sections.push([match[2],priority]);
 				}
 			}
-			
+
 			i++;
 			continue;
 		}
-		
+
 		const [nextI, table, columnWidths] = parseTable(lines, i);
 		if (table[0][0].toLowerCase() != "mod name")
 		{
@@ -112,7 +112,7 @@ async function main(argc: number, argv: string[])
 		}
 
 		manifest[currentSection] = manifest[currentSection] || {};
-		
+
 		const versions = getListedVersions(table);
 		const versionIdx = versions.indexOf(process.argv[4].trim());
 		if (versionIdx === -1) {
@@ -125,7 +125,7 @@ async function main(argc: number, argv: string[])
 				{
 					// bad mod!!!!
 					// we dont want it!!!!
-					
+
 					if (manifest[currentSection][`${namespace}:${id}`])
 					{
 						// but do we have it locally?
@@ -161,7 +161,7 @@ async function main(argc: number, argv: string[])
 							{
 								let oldData = fs.readFileSync(oldFileName);
 								let oldHash = SHA1(oldData);
-								if (oldHash !== manifest[currentSection][`${namespace}:${id}`].hash)
+								if (oldHash !== manifest[currentSection][`${namespace}:${id}`].sha1hash)
 								{
 									console.error("Hash mismatch found in " + namespace + ":" + id + "...");
 								}
@@ -197,7 +197,7 @@ async function main(argc: number, argv: string[])
 									manifest[currentSection][`${namespace}:${id}`] = {
 										filename: fileData.filename,
 										url,
-										hash: SHA1(fileData.contents),
+										sha1hash: SHA1(fileData.contents),
 									};
 									fs.writeFileSync(`${targetDirName}/manifest.json`, JSON.stringify(manifest, null, 4));
 								}
@@ -222,4 +222,3 @@ async function main(argc: number, argv: string[])
 }
 
 main(process.argv.length, process.argv);
-

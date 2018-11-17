@@ -102,7 +102,7 @@ export function formatModTable(table: string[][], columnWidths: number[]): strin
 	{
 		columnWidths[0] = Math.max(columnWidths[0], row[0].length);
 	}
-	
+
 	const dataColumnWidths: number[] = columnWidths.slice();
 	for (let row of table)
 	{
