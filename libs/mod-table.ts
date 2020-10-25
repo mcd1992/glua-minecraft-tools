@@ -1,4 +1,4 @@
-import { Document, ITable, TableCell } from "./markdown";
+import { Document, ITable, ITableRow, TableCell, TableRow } from "./markdown";
 import { IModRepository } from "./imodrepository";
 import { ModRepositories } from "./modrepositories";
 
@@ -65,7 +65,7 @@ export class ModTable
 		if (row == null) { return null; }
 
 		let name = row.cells[0].text.trim();
-		while (name.startsWith("+ "))
+		while (name.startsWith("+ ")) // Recursively strip 'dependency' marker
 		{
 			name = name.substring(2);
 		}
@@ -80,7 +80,7 @@ export class ModTable
 
 		for (let x = 0; x < row.cells.length; x++)
 		{
-			const match = row.cells[x].text.match(/\[[^\]]+\]\(([^)]+)\)/);
+			const match = row.cells[x].text.match(/\[[^\]]+\]\(([^)]+)\)/); // Extract URL out of markdown hyperlink
 			if (match == null) { continue; }
 
 			const url = match[1];
@@ -165,5 +165,87 @@ export class ModTable
 		row.cells[column].text = text;
 
 		return true;
+	}
+
+	public sortColumn(index: number, descend: boolean = false)
+	{
+		const depMap = new Map();
+		const temp: ITableRow[] = [];
+		let lastParent = new TableRow("");
+		const seenMap = new Map();
+		for (let i = 0; i < this.table.rows.length; i++)
+		{
+			const row = this.table.rows[i];
+			const modName = row.cells[0].text.trim();
+
+			// 'hide' dependencies from the temp array when sorting, add them back later
+			if (modName.startsWith("+ "))
+			{
+				let offset = 0;
+				const deps = new Map();
+
+				// Loop and group all the dependencies at once
+				for (; offset < this.table.rows.length; offset++)
+				{
+					const depRow = this.table.rows[i + offset];
+					if (!depRow) break;
+
+					const depMatch = depRow.cells[0].text.trim().match(/^[ \+]+(.*)$/);
+					if (depMatch && depMatch.length > 1)
+					{
+						deps.set(depRow.cells[0].text, depRow);
+					}
+					else
+					{
+						break;
+					}
+				}
+				depMap.set(lastParent.cells[0].text, deps);
+				i += (offset - 1);
+			}
+			else
+			{ // Store the dependency and its parent for later
+				if (!seenMap.has(modName))
+				{ // lazy unique filter
+					seenMap.set(modName, true);
+					temp.push(row);
+				}
+				lastParent = row;
+			}
+		}
+
+		temp.sort((a, b) =>
+		{
+			if (a.cells[index].text < b.cells[index].text) return descend ? 1 : -1;
+			if (a.cells[index].text > b.cells[index].text) return descend ? -1 : 1;
+
+			if (index != 0) // Secondary sort by mod/dep name
+			{
+				if (a.cells[0].text < b.cells[0].text) return descend ? 1 : -1;
+				if (a.cells[0].text > b.cells[0].text) return descend ? -1 : 1;
+			}
+			return 0;
+		});
+
+		// Re-insert the dependencies after the sorting is complete
+		depMap.forEach((deps, parentName) =>
+		{
+			temp.forEach((row, i) =>
+			{
+				if (row.cells[0].text === parentName)
+				{
+					deps.forEach((depRow) =>
+					{
+						temp.splice(i + 1, 0, depRow);
+					});
+				}
+			});
+		});
+
+		this.table.rows.splice(0, this.table.rows.length); // empty the rows array
+		for (const row of temp)
+		{
+			this.table.rows.push(row);
+		}
 	}
 }

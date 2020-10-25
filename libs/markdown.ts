@@ -329,4 +329,3 @@ export class Document implements IDocument
 		return new Document(string);
 	}
 }
-

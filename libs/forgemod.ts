@@ -124,7 +124,7 @@ export async function installForge(directory: string, minecraftVersion: string, 
 	fs.writeFileSync(directory + "/" + fileName, installerJar);
 
 	log("Running " + fileName + "...");
-	await exec("java", ["-jar", fileName, "--installServer"], { cwd: directory });
+	await exec("java", ["-jar", fileName, "--installServer"], {"maxBuffer": 1024 * 1024 * 20, cwd: directory });
 
 	return forgeVersion;
 }

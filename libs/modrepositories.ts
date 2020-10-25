@@ -24,6 +24,11 @@ export class ModRepositories
 		return this.modRepositoriesByName.get(name)!;
 	}
 
+	/**
+	 *
+	 * @param url Takes the full curseforge URL to parse the mod slug out of
+	 * @returns a new IModRepository instance and a string containing the mod slug; or null on error
+	 */
 	public parseModUrl(url: string): [IModRepository, string]|null
 	{
 		for (const modRepository of this.modRepositories)

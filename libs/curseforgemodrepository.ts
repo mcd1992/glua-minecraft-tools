@@ -100,6 +100,18 @@ export class CurseforgeModRepository implements IModRepository
 		return json.downloadUrl;
 	}
 
+	public async getModInfo(projectId: string): Promise<any>
+	{
+		const json = await this.get(`/addon/${projectId}`);
+		return json;
+	}
+
+	public async getFileInfo(projectId: string, fileId: string): Promise<any>
+	{
+		const json = await this.get(`/addon/${projectId}/file/${fileId}`);
+		return json;
+	}
+
 	public parseModReleaseUrl(url: string): [string, string]|null
 	{
 		let match = url.match(/https?:\/\/minecraft\.curseforge\.com\/projects\/([^/]+)\/files\/(\d+)/);
@@ -166,6 +178,7 @@ export class CurseforgeModRepository implements IModRepository
 			else
 			{
 				// Fallback to addon search, which is less reliable
+				// (Is this better? https://servermods.forgesvc.net/servermods/projects?search=modslug)
 				const json = await this.get(`/addon/search?gameId=${await this.getMinecraftGameId()}&searchFilter=${encodeURIComponent(slug)}`);
 				for (const result of json)
 				{
